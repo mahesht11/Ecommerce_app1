@@ -7,6 +7,8 @@ import com.ecom.product.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ProductServiceImpl implements ProductService {
 
@@ -15,23 +17,60 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse createProduct(ProductRequest productRequest) {
         Product product = new Product();
+        updateProductFromRequest(product, productRequest);
+        Product product1 = productRepository.save(product);
+        return mapToProductResponse(product1);
+    }
+
+    @Override
+    public List<ProductResponse> getAllProducts() {
+        return productRepository.findAll().stream().map(obj -> mapToProductResponse(obj)).toList();
+    }
+
+    @Override
+    public ProductResponse updateProduct(Long id, ProductRequest productRequest) {
+        return productRepository.findById(id)
+                .map(existingProduct -> {
+                    updateProductFromRequest(existingProduct, productRequest);
+                    Product savedProduct = productRepository.save(existingProduct);
+                    return mapToProductResponse(savedProduct);
+                }).get();
+    }
+
+    @Override
+    public String deleteProduct(Long id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Id is not found!"));
+        if(product.getId().equals(id)){
+            productRepository.delete(product);
+        }
+        return "Product Deleted with id : "+id;
+    }
+
+    @Override
+    public ProductResponse findById(Long id) {
+        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Id is not found!"));
+        return mapToProductResponse(product);
+    }
+
+    private ProductResponse mapToProductResponse(Product savedProduct) {
+        ProductResponse response = new ProductResponse();
+        response.setId(savedProduct.getId());
+        response.setName(savedProduct.getName());
+        response.setIsActive(savedProduct.getIsActive());
+        response.setCategory(savedProduct.getCategory());
+        response.setDescription(savedProduct.getDescription());
+        response.setPrice(savedProduct.getPrice());
+        response.setImageUrl(savedProduct.getImage());
+        response.setStockQuantity(savedProduct.getStockQuantity());
+        return response;
+    }
+
+    private void updateProductFromRequest(Product product, ProductRequest productRequest) {
         product.setName(productRequest.getName());
-        product.setPrice(productRequest.getPrice());
         product.setCategory(productRequest.getCategory());
         product.setDescription(productRequest.getDescription());
-        product.setStockQuantity(productRequest.getStockQuantity());
+        product.setPrice(productRequest.getPrice());
         product.setImage(productRequest.getImageUrl());
-        product.setIsActive(true);
-        Product product1 = productRepository.save(product);
-        ProductResponse response = new ProductResponse();
-        response.setName(product1.getName());
-        response.setPrice(product1.getPrice());
-        response.setCategory(product1.getCategory());
-        response.setDescription(product1.getDescription());
-        response.setStockQuantity(product1.getStockQuantity());
-        response.setImageUrl(product1.getImage());
-        response.setActive(product1.getIsActive());
-
-        return response;
+        product.setStockQuantity(productRequest.getStockQuantity());
     }
 }

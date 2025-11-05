@@ -22,8 +22,9 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
             @RequestHeader("X-User-ID") String userId) {
-        return orderService.createOrder(userId)
+        return new ResponseEntity<>(orderService.createOrder(userId), HttpStatus.CREATED);
+        /*return orderService.createOrder(userId)
                 .map(orderResponse -> new ResponseEntity<>(orderResponse, HttpStatus.CREATED))
-                .orElseGet(() -> ResponseEntity.badRequest().build());
+                .orElseGet(() -> ResponseEntity.badRequest().build());*/
     }
 }
